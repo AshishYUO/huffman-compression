@@ -2,5 +2,8 @@
 A minimal huffman compression program using C++ language.
 
 ## Running program
--- 1. g++ huff.cpp
--- 2. [a or ./a.out] [file to be compressed
+```
+g++ huff.cpp
+[a or ./a.out] [file_to_be_compressed]
+```
+  The file to be compressed will generate a file with extension '.abiz'
