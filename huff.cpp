@@ -63,7 +63,6 @@ Node *Combine(Node *a, Node *b) {
 vector <Node *> SortByCharacter(map <char, ll > value) {
 	vector < Node* > store;
 	map <char, ll> :: iterator it;
-	int k = 0;
 
 	for(it = value.begin(); it != value.end(); ++it) 
 		store.push_back(new Node(it->first, it->second));
@@ -178,7 +177,7 @@ void Decompress(const char*filename, ll filesize, ll leftover) {
 		exit(-1);
 	}
 	
-	char ch, fch, counter = 7;
+	char ch, counter = 7;
 	ll size = 0, unpacksize = 0;
 	string x = "";
 	unsigned char temp = 0;
