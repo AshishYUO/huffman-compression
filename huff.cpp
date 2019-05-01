@@ -9,7 +9,6 @@
 using namespace std;
 
 string HuffmanValue[256] = {""};
-map <string, unsigned char> Huffman;
 
 class Node {
 public:
@@ -76,7 +75,6 @@ ll StoreHuffmanValue(Node *root, string value) {
 		temp = StoreHuffmanValue(root->left, value+"0");
 		if (root->left == NULL && root->right == NULL) {
 			HuffmanValue[(unsigned char)root->character] = value;
-			Huffman[value] = (unsigned char) root->character;
 			temp += value.length()*root->count;
 		}
 		temp += StoreHuffmanValue(root->right, value+"1");
@@ -178,7 +176,7 @@ void Decompress(const char*filename, ll filesize, ll leftover, Node *root) {
 	
 	char ch, counter = 7, x;
 	ll size = 0;
-    Node *traverse = root;
+	Node *traverse = root;
 	unsigned char temp = 0;
 	ch = fgetc(iptr);
 	printf("Total filesize: %d\n", filesize);
