@@ -2,7 +2,6 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <utility>
 #include <vector>
 #include <algorithm>
 #define ll unsigned long long int
@@ -117,13 +116,12 @@ Node *GenerateHuffmanTree(map <char, ll > value) {
 	}
 	one = *(store.end()-1); two = *(store.end()-2);
 	parent = Combine(one, two);
-
 	return parent;
 }
 
 ll Compress(const char *filename, ll filesize) {
 	FILE *iptr = fopen(filename, "rb");
-	FILE *optr = fopen((string(filename)+".abiz").c_str(), "wb");
+	FILE *optr = fopen((string( filename)+".abiz").c_str(), "wb");
 	
 	if (iptr == NULL) {
 		perror("Error: File not found: ");
@@ -150,13 +148,14 @@ ll Compress(const char *filename, ll filesize) {
 		}
 		++size;
 		if(((size*100/filesize)) > ((size-1)*100/filesize))
-			printf("%d%% completed\n", (size*100/filesize));
+			printf("\r%d%% completed  ", (size*100/filesize));
 	}
 	if(fch) 
 		fputc(fch, optr);
 
 	fclose(iptr);
 	fclose(optr);
+	printf("\n");
 	return counter+1;
 }
 
@@ -168,7 +167,7 @@ int GetFileSize(const char *filename) {
 	return size;
 }
 
-void Decompress(const char*filename, ll filesize, ll leftover) {
+void Decompress(const char*filename, ll filesize, ll leftover, Node *root) {
 	FILE *iptr = fopen((string(filename)+".abiz").c_str(), "rb");
 	FILE *optr = fopen(("output"+string(filename).substr(string(filename).find_last_of("."))).c_str(), "wb");
 	
@@ -177,31 +176,28 @@ void Decompress(const char*filename, ll filesize, ll leftover) {
 		exit(-1);
 	}
 	
-	char ch, counter = 7;
-	ll size = 0, unpacksize = 0;
-	string x = "";
+	char ch, counter = 7, x;
+	ll size = 0;
+    Node *traverse = root;
 	unsigned char temp = 0;
 	ch = fgetc(iptr);
 	printf("Total filesize: %d\n", filesize);
 	while(size != filesize) {
 		while(counter > -1) {
-			x += ( ch & (1<<counter) ) ? '1' : '0';
+			traverse = ( ch & (1<<counter) ) ? traverse->right : traverse->left;
 			ch ^= (1<<counter);
 			--counter;
-			temp = Huffman[x];
-			if(temp) {
-				++unpacksize;
-				fputc(temp, optr);
+			if(traverse->left == NULL && traverse->right == NULL) {
+				fputc(traverse->character, optr);
 				if(size == filesize-1 && leftover == counter+1) 
 					break;
-				temp = 0;
-				x = "";
+				traverse = root;
 			}
 		}
 		++size;
 		counter = 7;
 		if(((size*100/filesize)) > ((size-1)*100/filesize)) 
-			printf("%d%% completed, size:%d bytes\n", (size*100/filesize), size);
+			printf("\r%d%% completed, size:%d bytes    ", (size*100/filesize), size);
 		ch = fgetc(iptr);
 	}
 	fclose(iptr);
@@ -219,7 +215,7 @@ int main(int argc, char *argv[]) {
 	
 	ll size = Compress(filename, filesize);
 	Inorder (root, string(""));
-	Decompress(filename, GetFileSize((string(filename)+".abiz").c_str()), size);
+	Decompress(filename, GetFileSize((string(filename)+".abiz").c_str()), size, root);
 	
 	return 0;
 }
