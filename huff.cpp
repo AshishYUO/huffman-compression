@@ -58,7 +58,7 @@ Node *Combine(Node *a, Node *b) {
 	return parent;
 }
 
-vector <Node *> SortByCharacter(map <char, ll > value) {
+vector <Node *> SortByCharacterCount(map <char, ll > value) {
 	vector < Node* > store;
 	map <char, ll> :: iterator it;
 
@@ -94,7 +94,7 @@ void Inorder(Node *root, string value) {
 }
 
 Node *GenerateHuffmanTree(map <char, ll > value) {
-	vector < Node* > store = SortByCharacter(value);
+	vector < Node* > store = SortByCharacterCount(value);
 	Node *one, *two, *parent;
 	ll size = store.size();
 	sort(store.begin(), store.end(), sortbysec);
