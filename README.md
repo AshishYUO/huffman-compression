@@ -102,3 +102,5 @@ g++ huff.cpp
 ./a.out [filename_to_be_compressed]
 ```
 The file to be compressed will generate a file with extension '.abiz', which is the compressed file and the output file which will be the uncompressed version of '.abiz' file.
+
+Note that compressing files other than ASCII based text files (e.g., audio (.mp3), video (.mp4), pdfs, document (.doc/.docx), etc.) can have little or no effect on the resulting size.
