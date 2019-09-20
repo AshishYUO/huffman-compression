@@ -160,7 +160,7 @@ ll Compress(const char *filename, ll filesize) {
 int GetFileSize(const char *filename) {
 	FILE *p_file = fopen(filename, "rb");
 	fseek(p_file, 0, SEEK_END);
-	// If the file size is bigger than 2^32 bytes(or 2 GB), consider using ftello64 instead of ftell
+	// If the file size is bigger than 2^31 bytes(or 2 GB), consider using ftello64 instead of ftell
 	int size = ftell(p_file);
 	fclose(p_file);
 	return size;
