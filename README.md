@@ -15,7 +15,7 @@ character     frequency
     F              2
     G              1
 ```
-The above following data will generate a binary tree starting from the characters having the lowest frequency, and construct till we get a complete binary tree as follows:
+The above following data will generate a binary tree starting from the characters having the lowest frequency, and construct till we use all the characters as follows:
 
 ```
 Pass 1:
