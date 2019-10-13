@@ -10,7 +10,7 @@ using namespace std;
 
 string HuffmanValue[256] = {""};
 
-class Node {
+typedef struct Node {
 public:
 	char character;
 	ll count;
@@ -27,7 +27,7 @@ public:
 		this->count = count;
 		this->left = this->right = NULL;
 	}
-};
+} Node;
 
 bool sortbysec(Node *a, Node *b) { 
 	return (a->count > b->count); 
@@ -35,18 +35,27 @@ bool sortbysec(Node *a, Node *b) {
 
 map <char, ll> ParseFile(const char* filename, ll filesize) {
 	FILE *ptr = fopen(filename, "rb");
+
 	if (ptr == NULL) {
 		perror("Error: File not found:");
 		exit(-1);
 	}
-	char ch;
+	
+	unsigned char ch;
 	ll size = 0;
-	map <char, ll> store;
+	ll Store[256];
+	for(int i = 0; i < 256; ++i)
+		Store[i] = 0;
+	
 	while(size != filesize) {
 		ch = fgetc(ptr);
-		++store[ch];
+		++Store[ch];
 		++size;
 	}
+	map <char, ll> store;
+	for(int i = 0; i < 256; ++i)
+		if(Store[i])
+			store[i] = Store[i];
 	fclose(ptr);
 	return store;
 }
@@ -58,7 +67,7 @@ Node *Combine(Node *a, Node *b) {
 	return parent;
 }
 
-vector <Node *> SortByCharacterCount(map <char, ll > value) {
+vector <Node *> SortByCharacter(map <char, ll > value) {
 	vector < Node* > store;
 	map <char, ll> :: iterator it;
 
@@ -94,7 +103,7 @@ void Inorder(Node *root, string value) {
 }
 
 Node *GenerateHuffmanTree(map <char, ll > value) {
-	vector < Node* > store = SortByCharacterCount(value);
+	vector < Node* > store = SortByCharacter(value);
 	Node *one, *two, *parent;
 	ll size = store.size();
 	sort(store.begin(), store.end(), sortbysec);
@@ -153,15 +162,14 @@ ll Compress(const char *filename, ll filesize) {
 
 	fclose(iptr);
 	fclose(optr);
-	printf("\n");
+	printf("Completed\n");
 	return counter+1;
 }
 
-int GetFileSize(const char *filename) {
+ll GetFileSize(const char *filename) {
 	FILE *p_file = fopen(filename, "rb");
 	fseek(p_file, 0, SEEK_END);
-	// If the file size is bigger than 2^31 bytes(or 2 GB), consider using ftello64 instead of ftell
-	int size = ftell(p_file);
+	ll size = ftello64(p_file);
 	fclose(p_file);
 	return size;
 }
@@ -177,7 +185,7 @@ void Decompress(const char*filename, ll filesize, ll leftover, Node *root) {
 	
 	char ch, counter = 7, x;
 	ll size = 0;
-	Node *traverse = root;
+    Node *traverse = root;
 	unsigned char temp = 0;
 	ch = fgetc(iptr);
 	printf("Total filesize: %d\n", filesize);
@@ -196,7 +204,7 @@ void Decompress(const char*filename, ll filesize, ll leftover, Node *root) {
 		++size;
 		counter = 7;
 		if(((size*100/filesize)) > ((size-1)*100/filesize)) 
-			printf("\r%d%% completed, size:%d bytes    ", (size*100/filesize), size);
+			printf("\r%d%% completed, size: %d bytes   ", (size*100/filesize), size);
 		ch = fgetc(iptr);
 	}
 	fclose(iptr);
@@ -209,8 +217,8 @@ int main(int argc, char *argv[]) {
 	ll filesize = GetFileSize(filename);
 	Node *root = GenerateHuffmanTree(ParseFile(filename, filesize));
 	ll predfilesize = StoreHuffmanValue(root, string(""));
-	printf("Original File: %lld\n", filesize);
-	printf("Compressed File Size: %lld\n", (predfilesize+7)/8);
+	printf("Original File: %lld bytes\n", filesize);
+	printf("Compressed File Size: %lld bytes\n", (predfilesize+7)/8);
 	
 	ll size = Compress(filename, filesize);
 	Inorder (root, string(""));
