@@ -234,11 +234,11 @@ void Compress(const char *filename, ll Filesize, ll PredictedFileSize) {
 	
 	char padding = (8 - ((PredictedFileSize)&(7)))&(7);
 	string header = GenerateHeader(padding);
-	int header_i = 0;
+	int header_i = 0, h_length = header.length();
 	cout << "Padding size: " << (int)padding << endl;
 	FILE *optr = fopen((string(filename)+".abiz").c_str(), "wb");
 	
-	while(header[header_i] != '\0') {
+	while(header_i < h_length) {
 		fputc(header[header_i], optr);
 		++header_i;
 	}
@@ -309,7 +309,7 @@ void Decompress(const char*filename, ll Filesize, ll leftover) {
 	register char ch, counter = 7;
 	register ll size = 0;
 	register ll filesize = Filesize-headersize;
-  register Node *traverse = root;
+	register Node *traverse = root;
 	ch = fgetc(iptr);
 	while(size != filesize) {
 		while(counter > -_1) {
