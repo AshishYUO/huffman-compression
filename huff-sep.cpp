@@ -123,7 +123,7 @@ namespace Huffman {
 		//    a. Character (1 byte)
 		//    b. Length of code (1 byte)
 		//    c. Huffman code (min: 1 byte, max: 255bytes)
-		// Worst case header size: 1 + (1+1)*(1+2+3+4+5+...+255) ~ 65kb... (only happens when skewed Huffman tree is generated)
+		// Worst case header size: 1 + (1+1)*256+(1+2+3+4+5+...+255+256) ~ 32kb... (only happens when skewed Huffman tree is generated)
 		// Best case header size: 1 + 1 + 1 + 1 (Happens only when a single character exists in an entire file).
 		string GenerateHeader(char padding) {
 			string header = "";
