@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <algorithm>
 #include <chrono>
@@ -9,10 +10,13 @@
 
 using namespace std;
 using namespace std::chrono;
-
-string HuffmanValue[256] = {""};
-
+/*
+	Compression Library
+*/
 namespace Huffman {
+	
+	string HuffmanValue[256] = {""};
+	
 	typedef struct Node {
 	public:
 		char character;
@@ -22,13 +26,13 @@ namespace Huffman {
 		Node(ll count) {
 			this->character = 0;
 			this->count = count;
-			this->left = this->right = NULL;
+			this->left = this->right = nullptr;
 		}
 
 		Node(char character, ll count) {
 			this->character = character;
 			this->count = count;
-			this->left = this->right = NULL;
+			this->left = this->right = nullptr;
 		}
 	} Node;
 	/*
@@ -43,19 +47,21 @@ namespace Huffman {
 			fclose(p_file);
 			return size;
 		}
-
 		// Test function to print huffman codes for each character.
-		void Inorder(Node *root, string value) {
-			if(root != NULL) {
-				Inorder(root->left, value+"0");
-				if (root->left == NULL && root->right == NULL) {
+		void Inorder(Node *root, string &value) {
+			if(root) {
+				value.push_back('0');
+				Inorder(root->left, value);
+				value.pop_back();
+				if (!root->left && !root->right) {
 					printf("Character: %c, Count: %lld, ", root->character, root->count);
 					cout << "Huffman Value: " << value << endl;
 				}
-				Inorder(root->right, value+"1");
+				value.push_back('1');
+				Inorder(root->right, value);
+				value.pop_back();
 			}
 		}
-
 	};
 
 	/*
@@ -63,10 +69,7 @@ namespace Huffman {
 	*/
 	namespace CompressUtility {
 		/*
-		Combine two nodes:
-				parent
-				/    \
-				b       a
+		Combine two nodes
 		*/
 		Node *Combine(Node *a, Node *b) {
 			Node *parent = new Node(a->count+b->count);
@@ -86,13 +89,10 @@ namespace Huffman {
 				perror("Error: File not found:");
 				exit(-1);
 			}
-			
 			register unsigned char ch;
 			register ll size = 0, filesize = Filesize;
-			ll Store[256];
-			for(int i = 0; i < 256; ++i)
-				Store[i] = 0;
-			
+			vector<ll>Store(256, 0);
+
 			while(size != filesize) {
 				ch = fgetc(ptr);
 				++Store[ch];
@@ -106,13 +106,12 @@ namespace Huffman {
 			return store;
 		}
 
-		vector <Node *> SortByCharacterCount(map <char, ll > value) {
+		vector <Node *> SortByCharacterCount(const map <char, ll >&value) {
 			vector < Node* > store;
-			map <char, ll> :: iterator it;
-
-			for(it = value.begin(); it != value.end(); ++it) 
+			auto it = begin(value);
+			for(; it != end(value); ++it) 
 				store.push_back(new Node(it->first, it->second));
-			sort(store.begin(), store.end(), sortbysec);
+			sort(begin(store), end(store), sortbysec);
 
 			return store;
 		}
@@ -120,123 +119,111 @@ namespace Huffman {
 		// Format: 
 		// 1. Total Unique Character (1 byte)
 		// 2. For each unique character:
-		//    a. Character (1 byte)
-		//    b. Length of code (1 byte)
-		//    c. Huffman code (min: 1 byte, max: 255bytes)
-		// Worst case header size: 1 + (1+1)*256+(1+2+3+4+5+...+255+256) ~ 32kb... (only happens when skewed Huffman tree is generated)
-		// Best case header size: 1 + 1 + 1 + 1 (Happens only when a single character exists in an entire file).
+		// 2a. Character (1 byte)
+		// 2b. Length of code (1 byte)
+		// 2c. Huffman code (min: 1 byte, max: 255bytes)
+		// 3. Padding
+		// Worst case header size: 1 + (1+1)*(1+2+3+4+5+...+255) + 1 ~ 32kb... (only happens when skewed Huffman tree is generated)
+		// Best case header size: 1 + 1 + 1 + 1 + 1 = 5bytes (Happens only when a single character exists in an entire file).
 		string GenerateHeader(char padding) {
 			string header = "";
-			register unsigned char UniqueCharacter = 255;
-			register int var = 0;
-			register unsigned char j = 0;
+			// UniqueCharacter start from -1 {0 means 1, 1 means 2, to conserve memory}
+			unsigned char UniqueCharacter = 255;
 			
-			for(register int i = 0; i < 256; ++i) {
-				var = 0; j = 0;
-				if(HuffmanValue[i] != "") {
-					
-					string temp = HuffmanValue[i];
-					
-					while(temp[j] != '\0') 
-						++j;
+			for(int i = 0; i < 256; ++i) {
+				if(HuffmanValue[i].size()) {
 					header.push_back(i);
-					header.push_back(j);
-					header += temp;
+					header.push_back(HuffmanValue[i].size());
+					header += HuffmanValue[i];
 					++UniqueCharacter;
 				}
 			}
 			char value = UniqueCharacter;
 			
 			return value+header+(char)padding;
-
 		}
+
 		// Store Huffman values for each character in string.
-		ll StoreHuffmanValue(Node *root, string value) {
+		// returns the size of the resulting file (without the header)
+		ll StoreHuffmanValue(Node *root, string &value) {
 			ll temp = 0;  
-			if(root != NULL) {
-				temp = StoreHuffmanValue(root->left, value+"0");
-				if (root->left == NULL && root->right == NULL) {
+			if(root) {
+				value.push_back('0');
+				temp = StoreHuffmanValue(root->left, value);
+				value.pop_back();
+				if (!root->left && !root->right) {
 					HuffmanValue[(unsigned char)root->character] = value;
-					temp += value.length()*root->count;
+					temp += value.size()*root->count;
 				}
-				temp += StoreHuffmanValue(root->right, value+"1");
+				value.push_back('1');
+				temp += StoreHuffmanValue(root->right, value);
+				value.pop_back();
 			}
 			return temp;
 		}
-
 		// Create huffman tree during compression...
-		Node *GenerateHuffmanTree(map <char, ll > value) {
+		Node *GenerateHuffmanTree(const map <char, ll>&value) {
 			vector < Node* > store = SortByCharacterCount(value);
 			Node *one, *two, *parent;
-			ll size = store.size();
-			sort(store.begin(), store.end(), sortbysec);
+			sort(begin(store), end(store), sortbysec);
 
-			while (size > 2) {
-				one = *(store.end()-1); two = *(store.end()-2);
+			while (store.size() > 2) {
+				one = *(end(store)-1); two = *(end(store)-2);
 				parent = Combine(one, two);
 				store.pop_back(); store.pop_back();
 				store.push_back(parent);
 
-				vector <Node *> :: iterator it1 = store.end()-2;
-				while((*it1)->count < parent->count && it1 != store.begin()) 
+				vector <Node *> :: iterator it1 = end(store)-2;
+				while((*it1)->count < parent->count && it1 != begin(store)) 
 					--it1;
-				
-				--size;
-				sort(it1, store.end(), sortbysec);
+				sort(it1, end(store), sortbysec);
 			}
-			one = *(store.end()-1); two = *(store.end()-2);
+			one = *(end(store)-1); two = *(end(store)-2);
 			parent = Combine(one, two);
 			return parent;
 		}
 		// Actual compression of a file.
-		void Compress(const char *filename, ll Filesize, ll PredictedFileSize) {
-			
-			char padding = (8 - ((PredictedFileSize)&(7)))&(7);
+		void Compress(const char *filename, const ll Filesize, const ll PredictedFileSize) {
+			const char padding = (8 - ((PredictedFileSize)&(7)))&(7);
 			string header = GenerateHeader(padding);
-			int header_i = 0, h_length = header.length();
+			int header_i = 0;
+			const int h_length = header.size();
 			cout << "Padding size: " << (int)padding << endl;
-			FILE *optr = fopen((string(filename)+".abiz").c_str(), "wb");
+			FILE *iptr = fopen(filename, "rb"), *optr = fopen((string(filename)+".abiz").c_str(), "wb");
 			
 			while(header_i < h_length) {
 				fputc(header[header_i], optr);
 				++header_i;
 			}
 
-			FILE *iptr = fopen(filename, "rb");
-			
-			if (iptr == NULL) {
+			if (!iptr) {
 				perror("Error: File not found: ");
 				exit(-1);
 			}
 
-			register char ch, fch = 0;
-			register const char _7 = 7, _c0 = '0', _NULL = '\0';
-			register char counter = _7;
-			ll size = 0;
-			ll filesize = Filesize;
-			int i;
-			string huffcode;
-			while(size != filesize) {
+			unsigned char ch, fch = 0;
+			char counter = 7;
+			ll size = 0, i;
+			while(size != Filesize) {
 				ch = fgetc(iptr);
-				huffcode = HuffmanValue[(unsigned char)ch];
 				i = 0;
-				while(huffcode[i] != _NULL) {
-					fch = fch | ((huffcode[i] - _c0)<<counter);
+				while(HuffmanValue[ch][i] != '\0') {
+					fch = fch | ((HuffmanValue[ch][i] - '0')<<counter);
 					--counter;
 					if(counter == -1) {
 						fputc(fch, optr);
-						counter = _7;
+						counter = 7;
 						fch = 0;
 					}
 					++i;
 				}
 				++size;
-				// if(((size*100/filesize)) > ((size-1)*100/filesize))
-				// 	printf("\r%d%% completed  ", (size*100/filesize));
+				if(((size*100/Filesize)) > ((size-1)*100/Filesize))
+					printf("\r%d%% completed  ", (size*100/Filesize));
 			}
 			if(fch) 
 				fputc(fch, optr);
-
+			printf("\n");
 			fclose(iptr);
 			fclose(optr);
 		}
@@ -246,60 +233,43 @@ namespace Huffman {
 		Functions necessary for decompression.
 	*/
 	namespace DecompressUtility {
-		// Create huffman tree during decompression...
-		void GenerateHuffmanTree(Node *root, string codes, unsigned char ch) {
+		// Create huffman tree during decompression
+		void GenerateHuffmanTree(Node * const root, const string &codes, const unsigned char ch) {
 			Node *traverse = root;
 			int i = 0;
 			while(codes[i] != '\0') {
-
-				if(codes[i] == '0')
-					if(traverse->left == NULL) {
-						Node *newnode = new Node(0);
-						traverse->left = newnode;
-						traverse = newnode;
-					} else 
-						traverse = traverse->left;
-				else
-					if(traverse->right == NULL) {
-						Node *newnode = new Node(0);
-						traverse->right = newnode;
-						traverse = newnode;
-					} else 
-						traverse = traverse->right;
+				if(codes[i] == '0') {
+					if(!traverse->left)
+						traverse->left = new Node(0);
+					traverse = traverse->left;
+				} else {
+					if(!traverse->right) 
+						traverse->right = new Node(0);
+					traverse = traverse->right;
+				}
 				++i;
-
 			}
 			traverse->character = ch;
 		}
-		// Function to store and generate a tree...
-		pair<Node *, pair<unsigned char, int> >DecodeHeader(FILE *iptr) {
-			
-			Node *root;
-			Node *rootnode = new Node(0);
-
-			root = rootnode;
-			register int charactercount, buffer, j, total_length = 0;
+		// Function to store and generate a tree
+		pair<Node*, pair<unsigned char, int> >DecodeHeader(FILE *iptr) {
+			Node *root = new Node(0);
+			int charactercount, buffer, total_length = 1;
 			register char ch, len;
 			charactercount = fgetc(iptr);
-			++total_length;
 			string codes;
-
 			++charactercount;
-
 			while(charactercount) {
 				ch = fgetc(iptr);
-				++total_length;
-				j = 0;
-				codes = ""; buffer = 0;
+				codes = ""; 
+				buffer = 0;
 				len = fgetc(iptr);
-				++total_length;
 				buffer = len;
 
-				while(buffer > j) {
+				while(buffer > codes.size()) 
 					codes += fgetc(iptr);
-					++j;
-				}
-				total_length += codes.length();
+				// character (1byte) + length(1byte) + huffmancode(n bytes where n is length of huffmancode)
+				total_length += codes.size()+2;
 
 				GenerateHuffmanTree(root, codes, ch);
 				--charactercount;
@@ -308,8 +278,8 @@ namespace Huffman {
 			++total_length;
 			return {root, {padding, total_length}};
 		}
-
-		void Decompress(const char*filename, ll Filesize, ll leftover) {
+		// Actual decompression function
+		void Decompress(const char*filename, const ll Filesize, const ll leftover) {
 			string fl = string(filename);
 			FILE *iptr = fopen(fl.c_str(), "rb");
 			FILE *optr = fopen(string("output"+fl.substr(0, fl.length()-5)).c_str(), "wb");
@@ -319,36 +289,32 @@ namespace Huffman {
 				exit(-1);
 			}
 
-			pair<Node *, pair<unsigned char, int> >HeaderMetadata = DecodeHeader(iptr);
-			Node *root = HeaderMetadata.first;
-			unsigned char padding = HeaderMetadata.second.first;
-			unsigned int headersize = HeaderMetadata.second.second;
+			pair<Node*, pair<unsigned char, int> >HeaderMetadata = DecodeHeader(iptr);
+			Node *const root = HeaderMetadata.first;
+			const auto padding = HeaderMetadata.second.first;
+			const auto headersize = HeaderMetadata.second.second;
 
-			register const char _1 = 1;
-			register char ch, counter = 7;
-			register ll size = 0;
-			register ll filesize = Filesize-headersize;
-			register Node *traverse = root;
+			char ch, counter = 7;
+			ll size = 0;
+			const ll filesize = Filesize-headersize;
+			Node *traverse = root;
 			ch = fgetc(iptr);
 			while(size != filesize) {
-				while(counter > -_1) {
-					traverse = ch & (_1<<counter)  ? (*traverse).right : (*traverse).left;
-					ch ^= (_1<<counter);
+				while(counter >= 0) {
+					traverse = ch & (1<<counter) ? traverse->right : traverse->left;
+					ch ^= (1<<counter);
 					--counter;
-					if((*traverse).left == NULL && (*traverse).right == NULL) {
-
-						fputc((*traverse).character, optr);
-						if(size == filesize-_1) {
-							if(padding == counter+_1)
-								break;
-						}
+					if(!traverse->left && !traverse->right) {
+						fputc(traverse->character, optr);
+						if(size == filesize-1 && padding == counter+1) 
+							break;
 						traverse = root;
 					}
 				}
 				++size;
 				counter = 7;
-				// if(((size*100/filesize)) > ((size-_1)*100/filesize)) 
-				// 	printf("\r%d%% completed, size: %d bytes   ", (size*100/filesize), size);
+				if(((size*100/filesize)) > ((size-1)*100/filesize)) 
+					printf("\r%lld%% completed, size: %lld bytes   ", (size*100/filesize), size);
 				ch = fgetc(iptr);
 			}
 			fclose(iptr);
@@ -362,7 +328,7 @@ using namespace Huffman;
 int main(int argc, char *argv[]) {
 	
 	if(argc != 3) {
-		printf("Usage:\n (a.exe|./a.out) -c|-dc [FileToBeCompressed]");
+		printf("Usage:\n (a.exe|./a.out) (-c FileToBeCompressed | -dc FileToBeDecompressed)");
 		exit(-1);
 	}
 	const char *option = argv[1], *filename = argv[2];
@@ -374,10 +340,12 @@ int main(int argc, char *argv[]) {
 	if(string(option) == "-c") {
 	
 		filesize = Utility::GetFileSize(filename);
-		Node *root = CompressUtility::GenerateHuffmanTree(CompressUtility::ParseFile(filename, filesize));
-		predfilesize = CompressUtility::StoreHuffmanValue(root, string(""));
+		auto mapper = CompressUtility::ParseFile(filename, filesize);
+		Node *const root = CompressUtility::GenerateHuffmanTree(mapper);
+		string buf = "";
+		predfilesize = CompressUtility::StoreHuffmanValue(root, buf);
 		printf("Original File: %lld bytes\n", filesize);
-		printf("Compressed File Size: %lld bytes\n", (predfilesize+7)/8);
+		printf("Compressed File Size (without header): %lld bytes\n", (predfilesize+7)>>3);
 	
 		start = system_clock::now();
 		CompressUtility::Compress(filename, filesize, predfilesize);
@@ -388,7 +356,6 @@ int main(int argc, char *argv[]) {
 	
 	}
 	else if(string(option) == "-dc"){
-
 		filesize = Utility::GetFileSize(filename);
 		start = system_clock::now();
 		DecompressUtility::Decompress(filename, filesize, predfilesize);
@@ -396,10 +363,8 @@ int main(int argc, char *argv[]) {
 
 		time = (end-start);
 		cout << "\nDecompression Time: " << time.count() << "s" << endl;
-
-	}else {
+	} else 
 		cout << "\nInvalid Option... Exiting\n";
-	}
 	return 0;
 	
 }
