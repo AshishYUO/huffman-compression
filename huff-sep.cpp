@@ -72,7 +72,7 @@ namespace Huffman {
 		Combine two nodes
 		*/
 		Node *Combine(Node *a, Node *b) {
-			Node *parent = new Node(a->count+b->count);
+			Node *parent = new Node((a ? a->count : 0)+(b ? b->count : 0));
 			parent->left = b;
 			parent->right = a;
 			return parent;
@@ -153,6 +153,7 @@ namespace Huffman {
 				value.pop_back();
 				if (!root->left && !root->right) {
 					HuffmanValue[(unsigned char)root->character] = value;
+					cout << value.size() << " " << root->count << endl;
 					temp += value.size()*root->count;
 				}
 				value.push_back('1');
@@ -166,7 +167,9 @@ namespace Huffman {
 			vector < Node* > store = SortByCharacterCount(value);
 			Node *one, *two, *parent;
 			sort(begin(store), end(store), sortbysec);
-
+			if (store.size() == 1) {
+				return Combine(store.back(), nullptr);
+			}
 			while (store.size() > 2) {
 				one = *(end(store)-1); two = *(end(store)-2);
 				parent = Combine(one, two);
