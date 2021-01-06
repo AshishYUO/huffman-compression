@@ -153,7 +153,6 @@ namespace Huffman {
 				value.pop_back();
 				if (!root->left && !root->right) {
 					HuffmanValue[(unsigned char)root->character] = value;
-					cout << value.size() << " " << root->count << endl;
 					temp += value.size()*root->count;
 				}
 				value.push_back('1');
