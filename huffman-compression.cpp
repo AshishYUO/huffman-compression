@@ -12,7 +12,7 @@
  * @brief Huffman compression namespace
  */
 namespace Huffman {
-	
+
 std::string HuffmanValue[256] = {""};
 
 /// @brief structure for storing nodes.
@@ -355,7 +355,7 @@ void decompress(const char*filename, const ll Filesize, const ll leftover) {
 
     std::pair<Node*, std::pair<unsigned char, int>>HeaderMetadata = decode_header(iptr);
     Node *const root = HeaderMetadata.first;
-	const auto [padding, headersize] = HeaderMetadata.second;
+    const auto [padding, headersize] = HeaderMetadata.second;
 
     char ch, counter = 7;
     ll size = 0;
@@ -393,43 +393,43 @@ void decompress(const char*filename, const ll Filesize, const ll leftover) {
 using namespace Huffman;
 
 int main(int argc, char *argv[]) {
-	if(argc != 3) {
-		printf("Usage:\n (a.exe|./a.out) (-c FileToBeCompressed | -dc FileToBeDecompressed)");
-		exit(-1);
-	}
-	const char *option = argv[1], *filename = argv[2];
-	printf("%s\n", filename);
-	
-	std::chrono::time_point <std::chrono::system_clock> start, end; 
-	std::chrono::duration <double> time;
-	ll filesize, predfilesize;
-	if (std::string(option) == "-c") {
-		filesize = Utility::get_file_size(filename);
-		auto mapper = CompressUtility::parse_file(filename, filesize);
-		Node *const root = CompressUtility::generate_huffman_tree(mapper);
-		std::string buf = "";
-		predfilesize = CompressUtility::store_huffman_value(root, buf);
-		printf("Original File: %lld bytes\n", filesize);
-		printf("Compressed File Size (without header): %lld bytes\n", (predfilesize+7)>>3);
-	
-		start = std::chrono::system_clock::now();
-		CompressUtility::compress(filename, filesize, predfilesize);
-		end = std::chrono::system_clock::now();
-
-		time = (end - start);
-		std::cout << "Compression Time: " << time.count() << "s" << std::endl;
-	
-	}
-	else if (std::string(option) == "-dc") {
-		filesize = Utility::get_file_size(filename);
-		start = std::chrono::system_clock::now();
-		DecompressUtility::decompress(filename, filesize, predfilesize);
-		end = std::chrono::system_clock::now();
-
-		time = (end - start);
-		std::cout << "\nDecompression Time: " << time.count() << "s" << std::endl;
-	} else {
-		std::cout << "\nInvalid Option... Exiting\n";
+    if(argc != 3) {
+        printf("Usage:\n (a.exe|./a.out) (-c FileToBeCompressed | -dc FileToBeDecompressed)");
+        exit(-1);
     }
-	return 0;	
+    const char *option = argv[1], *filename = argv[2];
+    printf("%s\n", filename);
+    
+    std::chrono::time_point <std::chrono::system_clock> start, end; 
+    std::chrono::duration <double> time;
+    ll filesize, predfilesize;
+    if (std::string(option) == "-c") {
+        filesize = Utility::get_file_size(filename);
+        auto mapper = CompressUtility::parse_file(filename, filesize);
+        Node *const root = CompressUtility::generate_huffman_tree(mapper);
+        std::string buf = "";
+        predfilesize = CompressUtility::store_huffman_value(root, buf);
+        printf("Original File: %lld bytes\n", filesize);
+        printf("Compressed File Size (without header): %lld bytes\n", (predfilesize+7)>>3);
+    
+        start = std::chrono::system_clock::now();
+        CompressUtility::compress(filename, filesize, predfilesize);
+        end = std::chrono::system_clock::now();
+
+        time = (end - start);
+        std::cout << "Compression Time: " << time.count() << "s" << std::endl;
+    
+    }
+    else if (std::string(option) == "-dc") {
+        filesize = Utility::get_file_size(filename);
+        start = std::chrono::system_clock::now();
+        DecompressUtility::decompress(filename, filesize, predfilesize);
+        end = std::chrono::system_clock::now();
+
+        time = (end - start);
+        std::cout << "\nDecompression Time: " << time.count() << "s" << std::endl;
+    } else {
+        std::cout << "\nInvalid Option... Exiting\n";
+    }
+    return 0;
 }
