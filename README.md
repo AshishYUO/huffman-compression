@@ -98,18 +98,12 @@ plus 5 digits appended to round off the remaining bits while storing in the file
 
 ## Executing program
 
-### For huff.cpp
 ```
-g++ huff.cpp
-./a.out [filename_to_be_compressed]
-```
-
-### For huff-sep.cpp
-```
-g++ huff-sep.cpp
+g++ huffman-compression.cpp
 [a.exe | ./a.out] -c|-dc [filename_to_be_compressed] 
 (The order must be same: first: option to compress/decompress and then second: filename)
 ```
-The file to be compressed will generate a file with extension '.abiz', which is the compressed file and the output file which will be the uncompressed version of '.abiz' file.
+The file to be compressed will generate a file with extension '.abiz', which is the compressed version of the original one.
 
-Note that compressing files other than ASCII based text files (e.g., audio (.mp3), video (.mp4), pdfs, document (.doc/.docx), etc.) can have little or no effect on the resulting size.
+> **Note**: 
+> - Compressing files other than ASCII based text files (e.g., audio (.mp3), video (.mp4), pdfs, document (.doc/.docx), etc.) can have little or no effect on the resulting size.
