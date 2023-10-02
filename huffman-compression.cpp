@@ -233,6 +233,7 @@ void compress (const char *filename, const ll Filesize, const ll PredictedFileSi
     const int h_length = header.size();
     std::cout << "Padding size: " << (int)padding << std::endl;
     FILE *iptr = fopen(filename, "rb"), *optr = fopen((std::string(filename)+".abiz").c_str(), "wb");
+	bool write_remaining=true;
     
     if (!iptr) {
         perror("Error: File not found: ");
@@ -252,11 +253,13 @@ void compress (const char *filename, const ll Filesize, const ll PredictedFileSi
         i = 0;
         const std::string &huffmanStr = HuffmanValue[ch];
         while(huffmanStr[i] != '\0') {
+			write_remaining = true;
             fch = fch | ((huffmanStr[i] - '0') << counter);
             // Decrement from 7 down to zero, and then
             // back again at 7
             counter = (counter + 7) & 7;
             if(counter == 7) {
+				write_remaining = false;
                 fputc(fch, optr);
                 fch ^= fch;
             }
@@ -267,7 +270,7 @@ void compress (const char *filename, const ll Filesize, const ll PredictedFileSi
             printf("\r%lld%% completed  ", (size * 100 / Filesize));
         }
     }
-    if(fch) {
+    if(write_remaining) {
         fputc(fch, optr);
     }
     printf("\n");
